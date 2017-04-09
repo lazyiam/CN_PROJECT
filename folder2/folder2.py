@@ -29,12 +29,12 @@ class Senderthread(Thread):
             global ackSentFlag
             if ackSentFlag:
                 if seqNoOfReceivedPacket==lastACKNo:
-                    print "The acknowledgement for the received packet number ", noOfPacketsReceived, "sent with acknowledgement number ",ACKNo
+                    print "The acknowledgement for the received packet number ", noOfPacketsReceived, " sent with acknowledgement number ",ACKNo, '\n', '\n','\n'
                     conn.send(str(ACKNo))
                     lastACKNo=ACKNo
                     ackSentFlag=0
                 else:
-                    print "Didn't get what receiver expected. Sending the last received acknowledgement number ", lastACKNo
+                    print "Didn't get what receiver expected. Sending the last received acknowledgement number ", lastACKNo, '\n', '\n','\n'
                     conn.send(str(lastACKNo))
                     ackSentFlag=0
             # command = raw_input("prompt:$ ")
@@ -66,7 +66,7 @@ class Receiverthread(Thread):
         while True:
             # print 'receiving.......'
             data=s.recv(1024)
-            print "Data received on the end of folder2.py",data
+            # print "Data received on the end of folder2.py",data
             global ACKNo,seqNoOfReceivedPacket,noOfPacketsReceived
             if data:
                 originalData=data
@@ -74,9 +74,9 @@ class Receiverthread(Thread):
                 seqNoOfReceivedPacket=int(data)
                 ACKNo=seqNoOfReceivedPacket + 1
                 noOfPacketsReceived+=1
+                print "Packet expecting with sequence number ",seqNoOfReceivedPacket, '\n'
+                print "Received packet number ",noOfPacketsReceived, " with sequence number ",seqNoOfReceivedPacket, '\n'
                 ackSentFlag=1
-                print "Packet expecting with sequence number ",seqNoOfReceivedPacket
-                print "Received packet number ",noOfPacketsReceived, "with sequence number ",seqNoOfReceivedPacket
                 # conn.send(ACKNo)
             # print "data:",data
         # s.shutdown(socket.SHUT_RDWR)

@@ -9,18 +9,19 @@ ack_dict = {}
 # ack_recv
 senttill = 0
 packetNum=1
-arr=[0 for i in range(1000000000)]
+arrTimeOut=[0 for i in range(1000000)]
+arr=[0 for i in range(1000000)]
 class Senderthread(Thread): #sender is my client
     def __init__(self):
         Thread.__init__(self)
 
     def run(self):
-        f = open('testfile','rb')
+        # f = open('testfile','rb')
         # global senttill = 0
         # ack_dict = {}
         # windowSize=5
         # f = open(filename,'rw+')
-        ack_recv = 0
+        # ack_recv = 0
         # sent = []
         # unacked = []
         global packetNum
@@ -52,6 +53,8 @@ class Senderthread(Thread): #sender is my client
 
             for x in range(l,r):
                 sendPacket(x)
+                arrTimeOut[x]=time.time()
+                time.sleep(0.1)
                 # if packetSentOrNot==1:
                 # temp2 = len(str(temp))
                 # temp = temp + (1024-temp2)
@@ -64,22 +67,26 @@ class Senderthread(Thread): #sender is my client
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind((host, port))
         s.listen(15)
-        windowSize=raw_input("Enter window size: ")
-        t_out=raw_input("Enter timeout interval: ")
-        numberOfPackets=raw_input("Enter number of pacekts to be sent: ")
+        windowSize=int(raw_input("Enter window size: "))
+        t_out=int(raw_input("Enter timeout interval: "))
+        numberOfPackets=int(raw_input("Enter number of pacekts to be sent: "))
 
         # iteratorOnPacketNumber=0
         conn, addr = s.accept()
         tempseqnum = 0
         sendWindow(1,1+windowSize) # Sending initial window
+        t0=time.time()
         ackIterator=1
         while True:
             global senttill
             global ack_dict
             global seqNo
-            if arr[ackIterator]=1:
-                sendWindow(ackIterator+windowSize,ackIterator+windowSize+1)
-                ackIterator+=1
+            if time.time()-arrTimeOut[ackIterator]<t_out :
+                if arr[ackIterator]==1:
+                    sendWindow(ackIterator+windowSize,ackIterator+windowSize+1)
+                    ackIterator+=1
+            else:
+                sendWindow(ackIterator,ackIterator+windowSize)
             # global packetNum
 
             # if ack_dict[str(seqNo-1)] == 1: #ack_dict[index]=0 means that the acknowledgement is not received for that packet
@@ -119,16 +126,6 @@ class Receiverthread(Thread): #receiver is my server sort of......
                 seqNo = int(data)-1
                 if arr[seqNo]==0:
                     arr[seqNo]=1
-
-                    # packetNum+=1
-
-                else:
-
-
-
-                # if ack_dict[str(seqNo-1)]==0:
-                #     ack_dict[str(seqNo-1)] =1
-            # print "data:",data
         s.shutdown(socket.SHUT_RDWR)
         s.close()
 
