@@ -27,6 +27,8 @@ class Senderthread(Thread):
         while True:
             global ACKNo,noOfPacketsReceived
             global ackSentFlag
+            # if str(ACKNo)=='5':
+            #     continue
             if ackSentFlag:
                 if seqNoOfReceivedPacket==lastACKNo:
                     print "The acknowledgement for the received packet number ", noOfPacketsReceived, " sent with acknowledgement number ",ACKNo, '\n', '\n','\n'
@@ -66,6 +68,8 @@ class Receiverthread(Thread):
         while True:
             # print 'receiving.......'
             data=s.recv(1024)
+            print "data= ",data
+            print "next data"
             # print "Data received on the end of folder2.py",data
             global ACKNo,seqNoOfReceivedPacket,noOfPacketsReceived
             if data:
