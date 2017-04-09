@@ -8,6 +8,8 @@ t_out =5
 ack_dict = {}
 # ack_recv
 senttill = 0
+packetNum=1
+arr=[0 for i in range(1000000000)]
 class Senderthread(Thread): #sender is my client
     def __init__(self):
         Thread.__init__(self)
@@ -21,32 +23,40 @@ class Senderthread(Thread): #sender is my client
         ack_recv = 0
         # sent = []
         # unacked = []
-        def sendPacket(seq_num):
+        global packetNum
+        def sendPacket(pacNo):
             global senttill
             global ack_dict
-            offset = seq_num
-            f.seek(offset,0)
-            len_seq_no = len(str(seq_num))
-            s = f.read(1024 - len_seq_no -1)
-            # print "s=",s
-            if not s:
-                # print "here"
-                # f.close()
-                return
-            else:
-                ack_dict[str(1024 - len_seq_no -1)] = 0
-                if (offset + 1024 - len_seq_no -1) > senttill:
-                    senttill = (offset + 1024 - len_seq_no -1)
-                pac = s + "~" + str(seq_num)
-                print "pac=",pac
-                conn.send(pac)
+            conn.send(str(pacNo))
+            senttill=pacNo
 
-        def sendWindow(seq_num):
-            temp = seq_num
-            for x in range(5):
-                sendPacket(temp)
-                temp2 = len(str(temp))
-                temp = temp + (1024-temp2)
+            # offset = seq_num
+            # f.seek(offset,0)
+            # len_seq_no = len(str(seq_num))
+            # s = f.read(1024 - len_seq_no -1)
+            # # print "s=",s
+            # if not s:
+            #     # print "here"
+            #     # f.close()
+            #     return
+            # else:
+            #     ack_dict[str(1024 - len_seq_no -1)] = 0
+            #     if (offset + 1024 - len_seq_no -1) > senttill:
+            #         senttill = (offset + 1024 - len_seq_no -1)
+            #     pac = s + "~" + str(seq_num)
+            #     print "pac=",pac
+            #     conn.send(pac)
+            #     return 1
+
+        def sendWindow(l,r):
+
+            for x in range(l,r):
+                sendPacket(x)
+                # if packetSentOrNot==1:
+                # temp2 = len(str(temp))
+                # temp = temp + (1024-temp2)
+                # else:
+
 
         host = ""
         port = 30000
@@ -60,15 +70,23 @@ class Senderthread(Thread): #sender is my client
 
         # iteratorOnPacketNumber=0
         conn, addr = s.accept()
-        sendWindow(0) # Sending initial window
         tempseqnum = 0
+        sendWindow(1,1+windowSize) # Sending initial window
+        ackIterator=1
         while True:
             global senttill
             global ack_dict
-            if ack_recv == 1:
-                sendPacket(senttill + 1)
-                iteratorOnPacketNumber+=1
-                ack_recv = 0
+            global seqNo
+            if arr[ackIterator]=1:
+                sendWindow(ackIterator+windowSize,ackIterator+windowSize+1)
+                ackIterator+=1
+            # global packetNum
+
+            # if ack_dict[str(seqNo-1)] == 1: #ack_dict[index]=0 means that the acknowledgement is not received for that packet
+            #     sendPacket(senttill + 1, 1, 2)   #ack_dict[index]=1 means that the acknowledgement is received for the packet one time only.
+            #     iteratorOnPacketNumber+=1        #ack_dict[index]=2 is assigned to make sure multiple occurences of the same packet doesn't occur.
+            #     # ack_recv = 0
+            #     ack_dict[str(seqNo-1)]=2
 
 
         print('Successfully get the file')
@@ -76,11 +94,6 @@ class Senderthread(Thread): #sender is my client
         s.shutdown(socket.SHUT_RDWR)
         s.close()
         print('connection closed')
-
-
-
-
-
 
 class Receiverthread(Thread): #receiver is my server sort of......
     def __init__(self):
@@ -92,7 +105,7 @@ class Receiverthread(Thread): #receiver is my server sort of......
         s = socket.socket()
         # s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         host = ""
-
+        global ack_recv, seqNo, packetNum, arr
         s.connect((host, port))
         # s.listen(5)
         # conn, addr = s.accept()
@@ -102,10 +115,19 @@ class Receiverthread(Thread): #receiver is my server sort of......
 
                 # print "data =", str(data)
                 originalData=data
-                # data=data.split()
                 ack_recv = 1
-                seqNo = int(data)
-                ack_dict[str(seqNo-1)] =1
+                seqNo = int(data)-1
+                if arr[seqNo]==0:
+                    arr[seqNo]=1
+
+                    # packetNum+=1
+
+                else:
+
+
+
+                # if ack_dict[str(seqNo-1)]==0:
+                #     ack_dict[str(seqNo-1)] =1
             # print "data:",data
         s.shutdown(socket.SHUT_RDWR)
         s.close()

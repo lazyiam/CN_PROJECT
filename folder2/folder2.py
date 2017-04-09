@@ -6,11 +6,13 @@ ACKNo = 0
 seqNoOfReceivedPacket = 0
 noOfPacketsReceived =0
 ackSentFlag = 0
+lastACKNo=1
 # senttill
 class Senderthread(Thread):
     def __init__(self):
         Thread.__init__(self)
     def run(self):
+        global lastACKNo
         Thread.__init__(self)
         host = ""
         port = 60000 #the receiver send the acknowledgement on port 60000
@@ -26,9 +28,15 @@ class Senderthread(Thread):
             global ACKNo,noOfPacketsReceived
             global ackSentFlag
             if ackSentFlag:
-                print "The acknowledgement for the received packet number ", noOfPacketsReceived, "sent with acknowledgement number ",ACKNo
-                conn.send(str(ACKNo))
-                ackSentFlag=0
+                if seqNoOfReceivedPacket==lastACKNo:
+                    print "The acknowledgement for the received packet number ", noOfPacketsReceived, "sent with acknowledgement number ",ACKNo
+                    conn.send(str(ACKNo))
+                    lastACKNo=ACKNo
+                    ackSentFlag=0
+                else:
+                    print "Didn't get what receiver expected. Sending the last received acknowledgement number ", lastACKNo
+                    conn.send(str(lastACKNo))
+                    ackSentFlag=0
             # command = raw_input("prompt:$ ")
             # arg=command.split()
             # # data = s.recv(1024)
@@ -62,9 +70,9 @@ class Receiverthread(Thread):
             global ACKNo,seqNoOfReceivedPacket,noOfPacketsReceived
             if data:
                 originalData=data
-                data=data.split('~')
-                seqNoOfReceivedPacket=int(data[1])
-                ACKNo=seqNoOfReceivedPacket + len(data[0]) + 1
+                # data=data.split('~')
+                seqNoOfReceivedPacket=int(data)
+                ACKNo=seqNoOfReceivedPacket + 1
                 noOfPacketsReceived+=1
                 ackSentFlag=1
                 print "Packet expecting with sequence number ",seqNoOfReceivedPacket
