@@ -2,6 +2,7 @@ import socket,os,datetime
 import time
 from threading import Thread
 import threading
+from random import randint
 seqNo=0
 windowSize=5
 t_out =5
@@ -28,7 +29,11 @@ class Senderthread(Thread): #sender is my client
         def sendPacket(pacNo):
             global senttill
             global ack_dict
-            conn.send(str(pacNo))
+            p=randint(1,10)
+            if p !=3:
+                conn.send(str(pacNo))
+            else:
+                print "missed for ",pacNo
             senttill=pacNo
 
             # offset = seq_num
@@ -124,8 +129,9 @@ class Receiverthread(Thread): #receiver is my server sort of......
                 originalData=data
                 ack_recv = 1
                 seqNo = int(data)-1
-                if arr[seqNo]==0:
-                    arr[seqNo]=1
+                for i in range(1,seqNo+1):
+                    if arr[i]==0:
+                        arr[i]=1
         s.shutdown(socket.SHUT_RDWR)
         s.close()
 

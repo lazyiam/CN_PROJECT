@@ -2,6 +2,7 @@ import socket,os,datetime
 import time
 from threading import Thread
 import threading
+from random import randint
 ACKNo = 0
 seqNoOfReceivedPacket = 0
 noOfPacketsReceived =0
@@ -32,9 +33,15 @@ class Senderthread(Thread):
             if ackSentFlag:
                 if seqNoOfReceivedPacket==lastACKNo:
                     print "The acknowledgement for the received packet number ", noOfPacketsReceived, " sent with acknowledgement number ",ACKNo, '\n', '\n','\n'
+                    p = randint(0,15)
+                    # if p !=3:
                     conn.send(str(ACKNo))
+                    # else:
+                    #     print "missed for ",ACKNo
+                    #     time.sleep(1.5)
                     lastACKNo=ACKNo
                     ackSentFlag=0
+                    print "downloaded -->",lastACKNo
                 else:
                     print "Didn't get what receiver expected. Sending the last received acknowledgement number ", lastACKNo, '\n', '\n','\n'
                     conn.send(str(lastACKNo))
@@ -69,7 +76,7 @@ class Receiverthread(Thread):
             # print 'receiving.......'
             data=s.recv(1024)
             print "data= ",data
-            print "next data"
+            # print "next data"
             # print "Data received on the end of folder2.py",data
             global ACKNo,seqNoOfReceivedPacket,noOfPacketsReceived
             if data:
