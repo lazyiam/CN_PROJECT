@@ -8,6 +8,8 @@ seqNoOfReceivedPacket = 0
 noOfPacketsReceived =0
 ackSentFlag = 0
 lastACKNo=1
+someflag=0
+breakflag=0
 # senttill
 class Senderthread(Thread):
     def __init__(self):
@@ -25,25 +27,30 @@ class Senderthread(Thread):
         # ackSentFlag=0
         s.listen(5)
         conn ,addr = s.accept()
+        global someflag,breakflag
         while True:
+            if breakflag==1:
+                break
             global ACKNo,noOfPacketsReceived
             global ackSentFlag
             # if str(ACKNo)=='5':
             #     continue
             if ackSentFlag:
                 if seqNoOfReceivedPacket==lastACKNo:
-                    print "The acknowledgement for the received packet number ", noOfPacketsReceived, " sent with acknowledgement number ",ACKNo, '\n', '\n','\n'
+                    print "ACK for correctly recieved packet sent with ACK no.= ",ACKNo
                     p = randint(0,15)
-                    # if p !=3:
-                    conn.send(str(ACKNo))
-                    # else:
-                    #     print "missed for ",ACKNo
-                    #     time.sleep(1.5)
                     lastACKNo=ACKNo
                     ackSentFlag=0
-                    print "downloaded -->",lastACKNo
+                    if p !=3:
+                        conn.send(str(ACKNo))
+                    else:
+                        print "ACK sent but lost during propogation with ACK no.= ",ACKNo
+                        someflag = 1
+                        time.sleep(1.5)
+                        someflag=0
+                    print "downloaded -->",lastACKNo-1, '\n','\n'
                 else:
-                    print "Didn't get what receiver expected. Sending the last received acknowledgement number ", lastACKNo, '\n', '\n','\n'
+                    print "Didn't get what receiver expected. Sending the last received acknowledgement number ", lastACKNo, '\n', '\n'
                     conn.send(str(lastACKNo))
                     ackSentFlag=0
             # command = raw_input("prompt:$ ")
@@ -72,22 +79,28 @@ class Receiverthread(Thread):
         # s.listen(5)
         # conn, addr = s.accept()
         ackSentFlag = 0
+        global someflag,breakflag
         while True:
             # print 'receiving.......'
             data=s.recv(1024)
+            if data == "close":
+                breakflag=1
+                break
+            # if someflag==0:
             print "data= ",data
+            global ACKNo,seqNoOfReceivedPacket,noOfPacketsReceived
             # print "next data"
             # print "Data received on the end of folder2.py",data
-            global ACKNo,seqNoOfReceivedPacket,noOfPacketsReceived
             if data:
                 originalData=data
                 # data=data.split('~')
                 seqNoOfReceivedPacket=int(data)
                 ACKNo=seqNoOfReceivedPacket + 1
                 noOfPacketsReceived+=1
-                print "Packet expecting with sequence number ",seqNoOfReceivedPacket, '\n'
-                print "Received packet number ",noOfPacketsReceived, " with sequence number ",seqNoOfReceivedPacket, '\n'
-                ackSentFlag=1
+                if someflag==0:
+                    print "Packet expecting with sequence number ",lastACKNo
+                    print "Received with sequence number ",seqNoOfReceivedPacket
+                    ackSentFlag=1
                 # conn.send(ACKNo)
             # print "data:",data
         # s.shutdown(socket.SHUT_RDWR)

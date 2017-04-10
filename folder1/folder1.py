@@ -12,6 +12,8 @@ senttill = 0
 packetNum=1
 arrTimeOut=[0 for i in range(1000000)]
 arr=[0 for i in range(1000000)]
+breakflag =0
+numberOfPackets = 0
 class Senderthread(Thread): #sender is my client
     def __init__(self):
         Thread.__init__(self)
@@ -28,12 +30,13 @@ class Senderthread(Thread): #sender is my client
         global packetNum
         def sendPacket(pacNo):
             global senttill
-            global ack_dict
+            global ack_dict,numberOfPackets
             p=randint(1,10)
-            if p !=3:
+            if p !=3 and pacNo<=numberOfPackets:
                 conn.send(str(pacNo))
             else:
-                print "missed for ",pacNo
+                if pacNo<=numberOfPackets:
+                    print "missed for ",pacNo
             senttill=pacNo
 
             # offset = seq_num
@@ -74,7 +77,9 @@ class Senderthread(Thread): #sender is my client
         s.listen(15)
         windowSize=int(raw_input("Enter window size: "))
         t_out=int(raw_input("Enter timeout interval: "))
-        numberOfPackets=int(raw_input("Enter number of pacekts to be sent: "))
+        atemp=int(raw_input("Enter number of pacekts to be sent: "))
+        global numberOfPackets
+        numberOfPackets = atemp
 
         # iteratorOnPacketNumber=0
         conn, addr = s.accept()
@@ -82,7 +87,14 @@ class Senderthread(Thread): #sender is my client
         sendWindow(1,1+windowSize) # Sending initial window
         t0=time.time()
         ackIterator=1
+        global breakflag
+        counter = 0
         while True:
+            counter+=1
+            if arr[numberOfPackets] == 1:
+                conn.send("close")
+                breakflag=1
+                break
             global senttill
             global ack_dict
             global seqNo
@@ -121,7 +133,10 @@ class Receiverthread(Thread): #receiver is my server sort of......
         s.connect((host, port))
         # s.listen(5)
         # conn, addr = s.accept()
+        global breakflag
         while True:
+            if breakflag==1:
+                break
             data=s.recv(1024)
             if data:
 
